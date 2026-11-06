@@ -1,0 +1,161 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------------------------
+// Enums
+// ------------------------------------------------------
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+// ------------------------------------------------------
+// User & Authentication
+// ------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Hashed password for credentials auth
+  role          Role      @default(STUDENT)
+  bio           String?   @db.Text
+
+  // Relations
+  createdCourses Course[]         @relation("InstructorCourses")
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([role])
+}
+
+// ------------------------------------------------------
+// Course Management
+// ------------------------------------------------------
+
+model Course {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?  @db.Text
+  imageUrl     String?  @db.Text
+  price        Decimal  @default(0.0) @db.Decimal(10, 2)
+  isPublished  Boolean  @default(false)
+
+  // Creator relation
+  instructorId String
+  instructor   User     @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
+
+  // Subordinate entities
+  modules      Module[]
+  enrollments  Enrollment[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([instructorId])
+  @@index([isPublished])
+}
+
+// ------------------------------------------------------
+// Modules / Sections
+// ------------------------------------------------------
+
+model Module {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  order       Int      // Sequence order within the course
+
+  // Course relation
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  lessons     Lesson[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+// ------------------------------------------------------
+// Lessons
+// ------------------------------------------------------
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  content     String?  @db.Text
+  videoUrl    String?  @db.Text
+  order       Int      // Sequence order within the module
+  isFree      Boolean  @default(false) // Previewable without enrollment
+
+  // Module relation
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  // Student progress tracking
+  userProgress LessonProgress[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([moduleId, order])
+  @@index([moduleId])
+}
+
+// ------------------------------------------------------
+// Enrollments & Progress
+// ------------------------------------------------------
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  progress   Float    @default(0.0) // Cached percentage: 0.0 to 100.0
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  enrolledAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// Granular lesson completion tracking
+model LessonProgress {
+  id          String   @id @default(cuid())
+  isCompleted Boolean  @default(false)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+}
+
