@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   GraduationCap,
   Video,
@@ -46,12 +47,18 @@ export default function HomePage() {
           </nav>
 
           <div className="flex items-center space-x-3">
-            <button className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">
+            <Link
+              href="/login"
+              className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
+            >
               Sign In
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"
+            >
               Get Started
-            </button>
+            </Link>
           </div>
         </div>
       </header>
