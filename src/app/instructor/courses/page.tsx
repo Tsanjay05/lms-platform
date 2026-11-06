@@ -142,9 +142,12 @@ export default async function InstructorCoursesPage() {
                     year: "numeric",
                   })}
                 </span>
-                <span className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 cursor-pointer">
+                <Link
+                  href={`/instructor/courses/${course.id}`}
+                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                >
                   Manage Curriculum &rarr;
-                </span>
+                </Link>
               </div>
             </div>
           ))}
